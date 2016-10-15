@@ -1,0 +1,10 @@
+{
+  "name": "experiment-server",
+  "version": "1.0.0",
+  "description": "server for recording experiment data",
+  "dependencies": {
+    "express": "^4.10.2",
+    "shelljs": "^0.7.4",
+    "socket.io": "^1.4.8"
+  }
+}

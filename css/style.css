@@ -1,0 +1,33 @@
+body
+{
+	background-color:lightgrey;
+}
+
+#mainContainer
+{
+	text-align:center;
+}
+
+#mainCanvas
+{
+	background-color:white;
+	border:1px solid black;
+}
+
+#controlPanel
+{
+	width:640px;
+	margin:0 auto;
+	background-color:white;
+}
+
+#start
+{
+	position:absolute;
+	z-index:10;
+}
+
+.output
+{
+	margin:0 auto;
+}

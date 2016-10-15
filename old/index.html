@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<meta charset="UTF-8"> 
+<html>
+<head>
+	<title>Latency Test</title>
+	<script src="js/jquery-3.1.0.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	
+	<script>
+		var runTime = 0.0;
+		var prevTime = 0.0;
+		
+		var running = false;
+		var latency = true;
+		var fluctuate = false;
+		
+		var rightZone = true;
+		var leftZone = true;
+		var counter = 0;
+		var fluctuateCount = 0;
+		var constantCount = 0;
+		var framerate = 60;
+		var latencyFrames = 50;
+		var maxLatency = 50;
+		var minLatency = 20;
+		var score = 0;
+		var error = 0;
+		var mouseQueue = [];
+		var results = [];
+		
+		
+		
+		var ballWidth = 25;
+		var ballSpeed = 5;
+		
+		//initialized in domready
+		var mouseX;
+		var mouseY;
+		var canvas;
+		var ctx;
+		var ball;
+		
+		$(document).ready(function() 
+		{
+		
+			canvas = $("#mainCanvas")[0];
+			ctx = canvas.getContext('2d');
+			
+			var canvasPosition = canvas.getBoundingClientRect();
+			$("#start").css("left",canvasPosition.left + canvas.width/2);
+			$("#start").css("top",canvasPosition.top + canvas.height/2);
+			
+			
+			mouseX = (canvas.width/2);
+			mouseY = (canvas.height/2);
+			canvas.addEventListener('mousemove',function(evt)
+			{
+				var position = getMousePos(canvas,evt);
+				mouseX = position.x;
+				mouseY = position.y;
+			});
+			
+			canvas.addEventListener('click',function(evt)
+			{
+				var position = getMousePos(canvas,evt);
+				mouseX = position.x;
+				mouseY = position.y;
+				
+				if(latency)
+				{
+					if(fluctuate)
+					{
+						mouseX = mouseQueue[latencyFrames - fluctuateLatency(minLatency,maxLatency)];
+					}
+					else
+					{
+						mouseX = mouseQueue[latencyFrames - maxLatency];
+					}
+				}
+				
+				if((mouseX > canvas.width * .15 && mouseX < canvas.width * .20) || 
+				(mouseX > canvas.width * .80 && mouseX < canvas.width * .85))
+				{
+					if((mouseX > canvas.width * .15 && mouseX < canvas.width * .20))
+					{
+						if(leftZone)
+						{
+							score++;
+							leftZone = false;
+							rightZone = true;
+							chooseLatency(mouseX);
+						}
+					}
+					else
+					{
+						if(rightZone)
+						{
+							score++;
+							leftZone = true;
+							rightZone = false;
+							chooseLatency(mouseX);
+						}
+					}
+				}
+				else if((mouseX > canvas.width * .10 && mouseX < canvas.width * .25) || 
+				(mouseX > canvas.width * .75 && mouseX < canvas.width * .90))
+				{
+					error++;
+				}
+				else
+				{
+					
+				}
+			});
+			
+			
+			
+			ball = {
+				x:canvas.width * .5,
+				y:canvas.height * .5
+			};
+			
+			$('input[type=radio][name=latency]').change(function() 
+			{
+				if (this.value == 'enabled') 
+				{
+					latency = true;
+				}
+				else if (this.value == 'disabled') 
+				{
+					latency = false;
+				}
+			
+			});
+			
+			$('input[type=radio][name=fluctuate]').change(function() 
+			{
+				if (this.value == 'enabled') 
+				{
+					fluctuate = true;
+				}
+				else if (this.value == 'disabled') 
+				{
+					fluctuate = false;
+				}
+			
+			});
+			
+			$( "#start" ).click(function() 
+			{
+				$(this).hide();
+				$("#mainCanvas").css("cursor","none");
+				running = true;
+			});
+			
+			
+			setInterval(function()
+			{
+				if(running)
+				{
+					update();
+					render();
+					counter+=(Math.PI/60);
+				}
+			}, 1000/framerate);
+			
+		});
+		
+		
+		function update()
+		{
+			if(running)
+			{
+				
+				
+				if(mouseQueue.length >= latencyFrames)
+				{
+					mouseQueue.shift();
+				}
+				
+				mouseQueue.push(mouseX);
+				
+				if(latency)
+				{
+					if(fluctuate)
+					{
+						ball.x = mouseQueue[latencyFrames - fluctuateLatency(minLatency,maxLatency)];
+						//console.log("Current Latency (frames): " + fluctuateLatency(minLatency,maxLatency));
+					}
+					else
+					{
+						ball.x = mouseQueue[latencyFrames - maxLatency];
+						//console.log("Current Latency (frames): " + maxLatency);
+					}
+				}
+				else
+				{
+					ball.x = mouseQueue[latencyFrames - 1];
+					//console.log("Current Latency (frames): 0");
+				}
+				
+			}
+		}
+		
+		function render()
+		{
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+			
+			/**/
+			//draw dotted goal lines
+			
+			ctx.setLineDash([0]);
+			ctx.lineWidth = 1;
+			
+			
+			ctx.setLineDash([5]);
+			//Left error zones
+			ctx.beginPath();
+			ctx.moveTo((canvas.width * .10),0);
+			ctx.lineTo((canvas.width * .10), canvas.height);
+			ctx.stroke();
+			
+			
+			ctx.moveTo((canvas.width * .25),0);
+			ctx.lineTo((canvas.width * .25), canvas.height);
+			ctx.stroke();
+			
+			//Right error zones
+			ctx.moveTo((canvas.width * .75),0);
+			ctx.lineTo((canvas.width * .75), canvas.height);
+			ctx.stroke();
+			
+
+			ctx.moveTo((canvas.width * .90),0);
+			ctx.lineTo((canvas.width * .90), canvas.height);
+			ctx.stroke();
+			
+			//Left Goal
+			ctx.fillStyle = 'green';
+			ctx.fillRect((canvas.width * .15),0,(canvas.width * .05),canvas.height);
+			ctx.stroke();
+			
+			//Right Goal
+			ctx.fillRect((canvas.width * .8),0,(canvas.width * .05),canvas.height);
+			ctx.stroke();
+			ctx.fillStyle = 'black';
+			
+			//draw ball trajectory line
+			ctx.beginPath();
+			ctx.moveTo(0,(canvas.height * .5));
+			ctx.lineTo(canvas.width, (canvas.height * .5));
+			ctx.closePath();
+			ctx.stroke();
+			
+			
+			
+			ctx.setLineDash([0]);
+			
+			//draw ball
+			ctx.beginPath();
+			ctx.arc(ball.x, ball.y, ballWidth/2, 0, 2 * Math.PI, false);
+			ctx.lineWidth = 5;
+			ctx.fillStyle = 'blue';
+			ctx.fill();
+			ctx.closePath();
+			ctx.stroke();
+			
+			
+			//Score
+			ctx.font = "12px Arial";
+			ctx.fillText("Score: " + score,0, 10);
+			ctx.fillText("Error: " + error,0, 24);
+		}
+		
+		function fluctuateLatency(lowerBound, upperBound)
+		{
+			return (.5*(maxLatency + minLatency)) + Math.round(Math.sin(counter) * (((maxLatency - minLatency)/2)));
+		}
+		
+		function getMousePos(canvas, evt) 
+		{
+			var rect = canvas.getBoundingClientRect();
+			return {
+				x: evt.clientX - rect.left,
+				y: evt.clientY - rect.top
+			};
+		}
+		
+		function record()
+		{
+			
+			for(i = 0; i < results.length; i++)
+			{
+				var result = "<p>" + results[i] + "</p><br/>";
+				$("#output").append(result);
+			}
+		}
+		
+		function chooseLatency(mouseX)
+		{
+			var flip = Math.random() * 2;
+			var date = new Date();
+			var time = date.getTime();
+			
+			var result = 
+			{
+				trial:score,
+				type:fluctuate,
+				startTime:prevTime,
+				endTime:time,
+				xPos:mouseX,
+				errors:error
+			};
+			
+			results.push(result);
+			
+			if(flip < 1 && fluctuateCount < 2)
+			{
+				fluctuateCount++;
+				fluctuate = true;
+			}
+			else if(flip > 1 && constantCount < 2)
+			{
+				constantCount++;
+				fluctuate = false;
+			}
+			else
+			{
+				record();
+				running = false;
+			}
+			
+			error = 0;
+			prevTime = time;
+		}
+		
+		
+	</script>
+	
+</head>
+<body>
+	<div id="mainContainer">
+		<canvas id="mainCanvas" width="1280" height="720">
+		</canvas>
+		<br/>
+		
+		<!--
+		<div id="controlPanel">
+			<h4>Control Panel</h4>
+			<b>Enable Latency:</b>
+			<input type="radio" name="latency" value="enabled" checked="checked">Enabled
+			<input type="radio" name="latency" value="disabled">Disabled
+			<br/>
+			<b>Fluctuate Latency:</b>
+			<input type="radio" name="fluctuate" value="enabled">Enabled
+			<input type="radio" name="fluctuate" value="disabled" checked="checked">Disabled
+			<br/>
+		</div>
+		-->
+		<button id="start" type="button">Start</button>
+	</div>
+	<div id="output">
+	</div>
+</body>
+</html>

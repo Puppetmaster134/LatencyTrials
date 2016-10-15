@@ -1,0 +1,8 @@
+1	2	Fluctuating	Left	Right	5288	8919	1128	1226	0
+2	2	Constant	Right	Left	9328	12133	130	144	0
+3	3	Constant	Left	Right	12937	18305	1110	1110	0
+4	3	Fluctuating	Right	Left	18948	26276	171	171	0
+5	4	Fluctuating	Left	Right	31719	38259	1097	1106	0
+6	4	Constant	Right	Left	39195	44508	157	161	0
+7	5	Constant	Left	Right	45080	50632	1108	1121	0
+8	5	Fluctuating	Right	Left	51496	59760	163	163	0
